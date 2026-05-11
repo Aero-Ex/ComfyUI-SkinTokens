@@ -1,0 +1,101 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# ignore tmp & output files
+_data/
+ckpt/
+configs/
+tmp/
+tmp_fusion/
+tmp_vae/
+tmp_video/
+*.glb
+*.ply
+*.obj
+*.fbx
+*.npz
+*.blend
+*.blend1
+*.blend2
+
+# ignore logs
+wandb/
+lightning_logs/
+*.log
+
+# ignore experiments
+experiments/
+results/
+dataset_clean/
+logs/
+datalist/
+dataset_inference/
+dataset_inference_clean/
+feature_viz/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+*.whl
+
+# uv
+uv.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+wandb/
+lightning_logs/
+logs/
+*.log
+
+# Data & checkpoints
+_data/
+/data/
+dataset_clean/
+dataset_inference/
+dataset_inference_clean/
+datalist/
+experiments/
+models/
+ckpt/
+results/
+
+# 3D model outputs (keep examples/)
+tmp/
+tmp_fusion/
+tmp_vae/
+tmp_video/
+tmp_gradio/
+feature_viz/
+
+# Test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Project-specific ignores

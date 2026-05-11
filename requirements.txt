@@ -1,0 +1,11 @@
+python-box
+einops
+omegaconf
+lightning
+addict
+fast-simplification
+trimesh
+open3d
+gradio
+bottle
+tornado

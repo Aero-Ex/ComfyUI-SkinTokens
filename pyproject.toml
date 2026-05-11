@@ -1,0 +1,23 @@
+[project]
+name = "ComfyUI-SkinTokens"
+description = "A ComfyUI plugin based on SkinTokens (Newer Auto-Rig) from VAST-AI-Research"
+version = "0.0.1"
+license = "MIT"
+dynamic = ["dependencies"]
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
+
+[project.urls]
+Repository = "https://github.com/Aero-Ex/ComfyUI-SkinTokens"
+
+[tool.comfy]
+PublisherId = "aerox"
+DisplayName = "ComfyUI-SkinTokens"
+Icon = ""
+
+
+
+
