@@ -14,7 +14,7 @@ env/
 # ignore tmp & output files
 _data/
 ckpt/
-configs/
+# configs/
 tmp/
 tmp_fusion/
 tmp_vae/
@@ -78,7 +78,7 @@ dataset_inference/
 dataset_inference_clean/
 datalist/
 experiments/
-models/
+/models/
 ckpt/
 results/
 

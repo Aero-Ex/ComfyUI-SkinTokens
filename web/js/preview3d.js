@@ -29,17 +29,21 @@ async function loadThreeJS() {
             // Upgrade FBXLoader to r147 (latest non-module version) to fix embedded texture bugs
             await loadScript("https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/FBXLoader.js");
             LOG("  ✓ FBXLoader (r147)");
-            
+
             // HACK: Force FBXLoader to recognize Blender's sanitized names (like Image_0_png) 
             // as valid embedded textures so it doesn't fall back to 404 URLs.
             const originalParse = THREE.FBXLoader.prototype.parse;
-            THREE.FBXLoader.prototype.parse = function(data, path) {
+            THREE.FBXLoader.prototype.parse = function (data, path) {
                 const result = originalParse.call(this, data, path);
                 LOG("FBX Hack: Applied sanitized extension support.");
                 return result;
             };
-            
+
             await loadScript("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/TGALoader.js");
+            if (!THREE.TGALoader) {
+                WARN("THREE.TGALoader not found after script load. Attempting legacy fallback...");
+                if (window.TGALoader) THREE.TGALoader = window.TGALoader;
+            }
             LOG("  ✓ TGALoader");
             LOG("All Three.js dependencies loaded.");
             resolve();
@@ -141,7 +145,7 @@ class ViewerController {
 
     undo() {
         if (this._history.length === 0) return;
-        
+
         // Save current to redo stack before applying history
         const current = this.node.bones.map(b => ({
             name: b.name,
@@ -397,7 +401,7 @@ class ViewerController {
 
         window.addEventListener('keydown', (e) => {
             if (e.key === "Escape") this._deselectBone();
-            
+
             // Undo: Alt + Z
             if (e.altKey && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
                 e.preventDefault();
@@ -538,7 +542,7 @@ app.registerExtension({
 
         nodeType.prototype._fixMaterial = function (mat) {
             if (!mat) return;
-            
+
             // Standardize textures for sRGB
             const textures = [mat.map, mat.emissiveMap, mat.specularMap];
             textures.forEach(t => {
@@ -548,11 +552,11 @@ app.registerExtension({
                 }
             });
 
-            mat.skinning = true; 
+            mat.skinning = true;
             mat.side = THREE.DoubleSide;
             mat.transparent = false; // Force opacity
             mat.opacity = 1.0;
-            
+
             // Fix untextured/black models
             if (!mat.map) {
                 // If it's pure black or has no color, force it to grey
@@ -561,7 +565,7 @@ app.registerExtension({
                     else mat.color = new THREE.Color(0xaaaaaa);
                 }
             }
-            
+
             mat.needsUpdate = true;
         };
 
@@ -611,7 +615,7 @@ app.registerExtension({
                         loader = new THREE.OBJLoader();
                         loader.setMaterials(materials);
                         this._performLoad(loader, url);
-                    }, () => {}, (err) => {
+                    }, () => { }, (err) => {
                         WARN("Failed to load MTL, falling back to basic OBJ loader.", err);
                         this._performLoad(new THREE.OBJLoader(), url);
                     });
@@ -621,38 +625,38 @@ app.registerExtension({
                 }
             } else if (ext === 'fbx') {
                 const manager = new THREE.LoadingManager();
-                
+
                 // Intercept texture requests and route them through ComfyUI's /view API
                 manager.setURLModifier((url) => {
                     // Avoid double-wrapping or wrapping non-texture files
                     if (url.includes('view?filename=')) return url;
-                    
+
                     const isTexture = /\.(png|jpg|jpeg|tga|dds|bmp)$/i.test(url) || url.includes('_png') || url.includes('_jpg');
                     const isFBM = url.includes('.fbm/') || url.includes('/textures/');
 
                     if (isTexture || isFBM) {
                         let filename = url.split('/').pop().toLowerCase();
-                        
+
                         // Fix name to match our model-prefixed .png fallback
                         if (!filename.includes('.')) {
                             filename += '.png';
                         }
                         filename = filename.replace(/_(png|jpg|jpeg|tga)$/i, '.$1');
-                        
+
                         const fbxUrlParams = new URLSearchParams(this.lastMeshUrl.split('?')[1]);
                         const fbxFilename = fbxUrlParams.get('filename') || "";
                         const subfolder = fbxUrlParams.get('subfolder') || '';
-                        
+
                         const modelName = fbxFilename.replace(/\.(fbx|glb|gltf)$/i, "");
                         const fbmFolder = `${modelName}.fbm`;
-                        
+
                         // Convert "Image_14" -> "image_14.png" inside the .fbm folder
                         let textureFile = url.split('/').pop().split('\\').pop();
                         textureFile = textureFile.replace(/\.[^/.]+$/, "").replace(/\s+/g, "_").toLowerCase();
                         if (!textureFile.endsWith(".png")) textureFile += ".png";
-                        
+
                         const finalSubfolder = subfolder ? `${subfolder}/${fbmFolder}` : fbmFolder;
-                        
+
                         LOG(`Redirecting texture fallback: ${url} -> ${fbmFolder}/${textureFile}`);
                         return api.apiURL(`/view?filename=${encodeURIComponent(textureFile)}&type=output&subfolder=${encodeURIComponent(finalSubfolder)}`);
                     }
@@ -662,9 +666,13 @@ app.registerExtension({
                 manager.onStart = (url, itemsLoaded, itemsTotal) => LOG(`Started loading texture: ${url}`);
                 manager.onLoad = () => LOG('All textures loaded successfully.');
                 manager.onError = (url) => ERR(`Failed to load texture: ${url}`);
-                
+
                 // Handle TGA textures often found in FBX
-                manager.addHandler(/\.tga$/i, new THREE.TGALoader());
+                if (THREE.TGALoader) {
+                    manager.addHandler(/\.tga$/i, new THREE.TGALoader());
+                } else {
+                    WARN("TGALoader is missing; .tga textures will not be displayed.");
+                }
                 loader = new THREE.FBXLoader(manager);
             } else {
                 loader = new THREE.GLTFLoader();
@@ -684,11 +692,11 @@ app.registerExtension({
                         child.frustumCulled = false; // Fixes "invisible" meshes with bad bounding boxes
                         child.castShadow = true;
                         child.receiveShadow = true;
-                        
+
                         if (child.isSkinnedMesh && child.skeleton) {
                             child.skeleton.update();
                         }
-                        
+
                         if (child.material) {
                             const mats = Array.isArray(child.material) ? child.material : [child.material];
                             mats.forEach(m => {
