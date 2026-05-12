@@ -6,7 +6,7 @@
 
 # ComfyUI-SkinTokens
 
-**Automated 3D Rigging · High-Fidelity Texture Preservation · Interactive FBX Preview**
+**Automated 3D Rigging · Skinning Existing bones · Interactive FBX Preview**
 
 [![python](https://img.shields.io/badge/python-3.10+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-compatible-green?logo=google-chrome&logoColor=white)](https://github.com/comfyanonymous/ComfyUI)
@@ -63,4 +63,3 @@ If you find my work useful, please consider starring the repository and supporti
 
 ### 🤝 Acknowledgements
 This project is based on the [SkinTokens](https://github.com/VAST-AI-Research/SkinTokens) research by VAST-AI-Research. We would like to thank the authors for their groundbreaking work in automated 3D rigging and skinning.
-# ComfyUI-SkinTokens

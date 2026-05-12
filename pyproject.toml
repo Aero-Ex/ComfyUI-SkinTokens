@@ -1,7 +1,7 @@
 [project]
 name = "ComfyUI-SkinTokens"
 description = "A ComfyUI plugin based on SkinTokens (Newer Auto-Rig) from VAST-AI-Research"
-version = "0.0.1"
+version = "0.0.3"
 license = "MIT"
 dynamic = ["dependencies"]
 readme = "README.md"

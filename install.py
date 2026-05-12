@@ -19,10 +19,24 @@ def find_blender_python(blender_path):
     """Finds the internal python executable relative to the blender executable."""
     blender_bin = Path(blender_path)
     root_dir = blender_bin.parent
-    patterns = ["**/python/bin/python.exe", "python/bin/python.exe"] if os.name == 'nt' else ["**/bin/python3*", "bin/python3*"]
+    if os.name == 'nt':
+        patterns = ["**/python/bin/python.exe", "python/bin/python.exe", "**/python.exe"]
+    else:
+        patterns = ["**/bin/python3*", "bin/python3*", "**/python3*"]
+    
     for pattern in patterns:
         matches = list(root_dir.glob(pattern))
-        if matches: return str(matches[-1])
+        # Filter out configuration scripts and directories
+        matches = [m for m in matches if not str(m).endswith("-config") and m.is_file()]
+        if not matches: continue
+        
+        # Prioritize exact names like 'python3' or 'python.exe'
+        exact_names = ["python", "python3", "python.exe"]
+        for name in exact_names:
+            for m in matches:
+                if m.name == name: return str(m)
+        
+        return str(matches[-1])
     return None
 
 def install_core_section():
@@ -46,14 +60,27 @@ def install_core_section():
 
 def install_blender_section():
     print("\n--- Phase 1: Blender Standalone Server Setup ---")
-    blender_cmd = shutil.which("blender")
-    user_input = input(f"Enter path to blender executable [Default: {blender_cmd or 'Not Found'}]: ").strip()
-    final_blender = user_input if user_input else blender_cmd
+    final_blender = shutil.which("blender")
+    
+    # Common Windows installation paths as fallbacks
+    if not final_blender and os.name == 'nt':
+        common_paths = [
+            "C:\\Program Files\\Blender Foundation\\Blender 4.3\\blender.exe",
+            "C:\\Program Files\\Blender Foundation\\Blender 4.2\\blender.exe",
+            "C:\\Program Files\\Blender Foundation\\Blender 4.1\\blender.exe",
+            "C:\\Program Files\\Blender Foundation\\Blender 4.0\\blender.exe",
+        ]
+        for p in common_paths:
+            if os.path.exists(p):
+                final_blender = p
+                break
     
     if not final_blender:
-        print("ERROR: Blender not found. Please install Blender or provide a valid path.")
+        print("WARNING: 'blender' executable not found in system PATH.")
+        print("         The standalone 3D server setup will be skipped.")
         return
 
+    print(f"Blender found at: {final_blender}")
     py_exe = find_blender_python(final_blender)
     if not py_exe:
         print(f"ERROR: Could not find internal Python in Blender path: {final_blender}")
@@ -115,10 +142,12 @@ def install_flash_attn_section():
 
     if full_url:
         print(f"Target Wheel: {full_url}")
-        choice = input("Proceed with installation? [y/N]: ").lower()
-        if choice == 'y':
+        print("Proceeding with automatic installation...")
+        try:
             subprocess.run([sys.executable, "-m", "pip", "install", full_url], check=True)
             print("SUCCESS: Flash Attention installed.")
+        except Exception as e:
+            print(f"ERROR: Flash Attention installation failed: {e}")
     else:
         print("NOTICE: No matching pre-built wheel found for your configuration.")
 
