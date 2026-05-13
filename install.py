@@ -43,13 +43,20 @@ def install_core_section():
     print("\n--- Phase 0: Core Library Setup ---")
     
     # Try to install bpy optionally
-    print("Attempting to install 'bpy' (optional native support)...")
+    print("Checking for 'bpy' (optional native support)...")
     try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "bpy"], check=True)
-        print("SUCCESS: Native 'bpy' installed.")
-    except Exception:
-        print("NOTICE: 'bpy' installation failed or is not supported for this Python version.")
-        print("        The node will use the Headless Blender Server instead (this is normal).")
+        import bpy
+        print("SUCCESS: Native 'bpy' is already installed.")
+    except ImportError:
+        print("Attempting to install 'bpy' (optional, might fail)...")
+        # Capture output to avoid "red error" text in the console if it fails
+        res = subprocess.run([sys.executable, "-m", "pip", "install", "bpy"], 
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if res.returncode == 0:
+            print("SUCCESS: Native 'bpy' installed.")
+        else:
+            print("NOTICE: 'bpy' (native module) not available. Using system Blender instead.")
+            print("        (This is normal and expected on most systems).")
 
     print(f"Installing required core dependencies: {', '.join(CORE_DEPS)}...")
     try:

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 try:
+    import torch
     from torch import Tensor
 except ImportError:
     Tensor = any # Fallback for environments without torch

@@ -392,8 +392,11 @@ class ViewerController {
 
         el.addEventListener('wheel', (e) => {
             e.preventDefault();
-            this._spherical.radius *= 1 + e.deltaY * this.zoomSpeed;
-            this._spherical.radius = Math.max(0.1, Math.min(50, this._spherical.radius));
+            // Use geometric zoom for smoother experience across scales
+            const factor = Math.pow(0.9, -e.deltaY / 100);
+            this._spherical.radius *= factor;
+            // Support massive and tiny models
+            this._spherical.radius = Math.max(0.001, Math.min(1000000, this._spherical.radius));
             this._updateCamera();
         }, { passive: false });
 
@@ -452,7 +455,15 @@ app.registerExtension({
                 serialize: false,
                 hideOnZoom: false
             });
-            widget.computeSize = function () { return [400, 400]; };
+
+            // Make the widget responsive to node resizing
+            widget.computeSize = (width) => {
+                const nodeWidth = node.size[0];
+                const nodeHeight = node.size[1];
+                // Subtract space for the node header and any potential input pins
+                return [width, Math.max(100, nodeHeight - 40)];
+            };
+
             node.setSize([400, 440]);
 
             const overlay = document.createElement("div");
@@ -487,7 +498,7 @@ app.registerExtension({
                 fillLight.position.set(-5000, 5000, 2000);
                 scene.add(fillLight);
 
-                const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000000);
+                const camera = new THREE.PerspectiveCamera(45, width / height, 0.001, 1000000);
                 camera.position.set(0, 1.5, 3);
 
                 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -716,13 +727,10 @@ app.registerExtension({
                 const size = box.getSize(new THREE.Vector3());
                 const maxHeight = Math.max(size.x, size.y, size.z);
 
-                // IMPORTANT: Do not scale the model directly! 
-                // Scaling a skinned mesh's parent causes weird stretching during rotation.
-                // Instead, we just center it and move the camera to fit.
-                // TEMP: Disable centering to see if it's breaking SkinnedMesh binding
-                // model.position.sub(center);
-                // model.position.y += size.y / 2;
-                LOG(`Model loaded at origin (Centering disabled for debugging).`);
+                // Centering the model ensures rotation gizmos and camera framing work correctly.
+                model.position.sub(center);
+                model.position.y += size.y / 2;
+                LOG(`Model centered and grounded.`);
 
                 let rootBone = null;
                 const allBones = [];
@@ -747,7 +755,13 @@ app.registerExtension({
 
                     const sphereRadius = maxHeight * 0.01; // Scale spheres to model size
                     const sphereGeom = new THREE.SphereGeometry(sphereRadius, 8, 8);
-                    const sphereMat = new THREE.MeshBasicMaterial({ color: 0xff0000, visible: false });
+                    const sphereMat = new THREE.MeshBasicMaterial({ 
+                        color: 0x44ff44, 
+                        transparent: true, 
+                        opacity: 0.2, 
+                        depthTest: false,
+                        visible: true 
+                    });
 
                     allBones.forEach(bone => {
                         const sphere = new THREE.Mesh(sphereGeom, sphereMat);
