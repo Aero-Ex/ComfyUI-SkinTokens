@@ -30,7 +30,7 @@ A ComfyUI implementation for automated character rigging can be used for animati
 1.  Open a terminal in your `ComfyUI/custom_nodes/` folder.
 2.  Clone the repository:
     ```bash
-    git clone https://github.com/your-username/ComfyUI-SkinTokens.git
+    git clone https://github.com/Aero-Ex/ComfyUI-SkinTokens
     ```
 3.  Navigate into the folder and run the installation script:
     ```bash
