@@ -72,6 +72,8 @@ def install_blender_section():
     # Common Windows installation paths as fallbacks
     if not final_blender and os.name == 'nt':
         common_paths = [
+            "C:\\Program Files\\Blender Foundation\\Blender 4.5\\blender.exe",
+            "C:\\Program Files\\Blender Foundation\\Blender 4.4\\blender.exe",
             "C:\\Program Files\\Blender Foundation\\Blender 4.3\\blender.exe",
             "C:\\Program Files\\Blender Foundation\\Blender 4.2\\blender.exe",
             "C:\\Program Files\\Blender Foundation\\Blender 4.1\\blender.exe",
@@ -96,6 +98,9 @@ def install_blender_section():
     print(f"Found Blender Python: {py_exe}")
     print(f"Installing server dependencies: {', '.join(BLENDER_DEPS)}...")
     try:
+        # Blender's bundled Python has no pip on Windows until ensurepip runs
+        subprocess.run([py_exe, "-m", "ensurepip"], check=True,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         subprocess.run([py_exe, "-m", "pip", "install"] + BLENDER_DEPS, check=True)
         print("SUCCESS: Blender server dependencies installed.")
     except Exception as e:

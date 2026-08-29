@@ -58,7 +58,7 @@ def start_bpy_server_lazy(headless=False):
     if headless:
         # HEADLESS MODE (System Blender)
         import shutil
-        blender_cmd = shutil.which("blender") or "blender"
+        blender_cmd = os.environ.get("SKINTOKENS_BLENDER_PATH") or shutil.which("blender") or "blender"
         args = [blender_cmd, "--background", "--python", bpy_server_path]
         env = os.environ.copy()
         print(f"[SkinTokens] Starting Headless Blender server...")
@@ -115,6 +115,12 @@ atexit.register(cleanup_bpy_server)
 def wait_for_bpy_server(timeout=30):
     t0 = time.time()
     while True:
+        if _bpy_server_proc is not None and _bpy_server_proc.poll() is not None:
+            raise RuntimeError(
+                f"bpy_server exited immediately with code {_bpy_server_proc.returncode}. "
+                "A Python module is likely missing in the server environment - run the server "
+                "manually to see the real error: python_embeded\\python.exe ComfyUI\\custom_nodes\\ComfyUI-SkinTokens\\bpy_server.py"
+            )
         try:
             requests.get(f"{BPY_SERVER}/ping", timeout=1)
             print("[SkinTokens] bpy_server is ready")
